@@ -507,6 +507,11 @@ impl HeaderView {
     {
         let mut current = self;
         if number > current.number() {
+            debug!(
+                "HeaderView.get_ancestor error: {} > {}",
+                number,
+                current.number()
+            );
             return None;
         }
         let mut number_walk = current.number();
@@ -521,11 +526,23 @@ impl HeaderView {
                                 && number_skip_prev >= number)) =>
                 {
                     // Only follow skip if parent->skip isn't better than skip->parent
-                    current = get_header_view(hash)?;
+                    current = match get_header_view(hash) {
+                        Some(v) => v,
+                        None => {
+                            debug!("HeaderView.get_ancestor error: get header view by hash failed: {}", hash);
+                            return None;
+                        }
+                    };
                     number_walk = number_skip;
                 }
                 _ => {
-                    current = get_header_view(&current.parent_hash())?;
+                    current = match get_header_view(&current.parent_hash()) {
+                        Some(v) => v,
+                        None => {
+                            debug!("HeaderView.get_ancestor error: get header view  by parent hash failed: {}", current.parent_hash());
+                            return None;
+                        }
+                    };
                     number_walk -= 1;
                 }
             }
@@ -845,8 +862,12 @@ impl SyncSharedState {
     }
 
     pub fn get_ancestor(&self, base: &Byte32, number: BlockNumber) -> Option<core::HeaderView> {
-        self.get_header_view(base)?
-            .get_ancestor(number, |hash| self.get_header_view(hash))
+        if let Some(header_view) = self.get_header_view(base) {
+            header_view.get_ancestor(number, |hash| self.get_header_view(hash))
+        } else {
+            debug!("get ancestor error: base = {} not found", base);
+            None
+        }
     }
 
     pub fn get_locator(&self, start: &core::HeaderView) -> Vec<Byte32> {
