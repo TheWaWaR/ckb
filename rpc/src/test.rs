@@ -377,6 +377,7 @@ fn params_of(shared: &Shared, method: &str) -> Value {
     };
     let tip_number: Uint64 = tip.number().into();
     let tip_hash = json!(format!("{:#x}", Unpack::<H256>::unpack(&tip.hash())));
+    let tip_cellbase_hash = json!(Unpack::<H256>::unpack(&tip.tx_hashes()[0]));
     let target_hash = {
         let snapshot = shared.snapshot();
         let target_number = tip.number() - snapshot.consensus().finalization_delay_length();
@@ -431,6 +432,7 @@ fn params_of(shared: &Shared, method: &str) -> Value {
         "send_transaction" => vec![transaction, json!("passthrough")],
         "dry_run_transaction" | "_compute_transaction_hash" => vec![transaction],
         "get_transaction" => vec![transaction_hash],
+        "get_tx_out_proof" => vec![json!(vec![tip_cellbase_hash])],
         "index_lock_hash" => vec![json!(always_success_script_hash), json!("0x400")],
         "deindex_lock_hash" | "get_capacity_by_lock_hash" => {
             vec![json!(always_success_script_hash)]

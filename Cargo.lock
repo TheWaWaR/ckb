@@ -890,6 +890,7 @@ dependencies = [
  "jsonrpc-server-utils",
  "jsonrpc-tcp-server",
  "jsonrpc-ws-server",
+ "merkle-cbt",
  "num_cpus",
  "pretty_assertions",
  "rand 0.7.0",

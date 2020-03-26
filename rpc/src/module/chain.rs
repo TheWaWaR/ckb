@@ -2,6 +2,7 @@ use crate::error::RPCError;
 use ckb_jsonrpc_types::{
     BlockEconomicState, BlockNumber, BlockReward, BlockView, CellOutputWithOutPoint,
     CellWithStatus, EpochNumber, EpochView, HeaderView, OutPoint, TransactionWithStatus,
+    TxOutProof,
 };
 use ckb_logger::{error, warn};
 use ckb_reward_calculator::RewardCalculator;
@@ -11,6 +12,7 @@ use ckb_types::{
     core::{self, cell::CellProvider},
     packed,
     prelude::*,
+    utilities::CBMT,
     H256,
 };
 use jsonrpc_core::{Error, Result};
@@ -66,6 +68,9 @@ pub trait ChainRpc {
 
     #[rpc(name = "get_block_economic_state")]
     fn get_block_economic_state(&self, _hash: H256) -> Result<Option<BlockEconomicState>>;
+
+    #[rpc(name = "get_tx_out_proof")]
+    fn get_tx_out_proof(&self, _hashes: Vec<H256>) -> Result<TxOutProof>;
 }
 
 pub(crate) struct ChainRpcImpl {
@@ -355,5 +360,47 @@ impl ChainRpc for ChainRpcImpl {
                 })
                 .map(Into::into)
         }))
+    }
+
+    fn get_tx_out_proof(&self, hashes: Vec<H256>) -> Result<TxOutProof> {
+        if hashes.is_empty() {
+            return Err(RPCError::custom(
+                RPCError::Invalid,
+                "Empty tx hashes".to_owned(),
+            ));
+        }
+        if let Some((_, block_hash)) = self.shared.snapshot().get_transaction(&hashes[0].pack()) {
+            let mut indices = Vec::new();
+            let tx_hashes: Vec<packed::Byte32> =
+                hashes.iter().map(|hash| hash.pack()).collect::<Vec<_>>();
+            let block_view = self.shared.snapshot().get_block(&block_hash).unwrap();
+            for tx_hash in &tx_hashes {
+                if let Some(index) = block_view
+                    .tx_hashes()
+                    .iter()
+                    .position(|hash| tx_hash == hash)
+                {
+                    indices.push(index);
+                } else {
+                    return Err(RPCError::custom(
+                        RPCError::Invalid,
+                        format!("Tx hash {} not in the same block", tx_hash),
+                    ));
+                }
+            }
+            let proof = CBMT::build_merkle_proof(block_view.tx_hashes(), &indices[..]).unwrap();
+            let indices = proof.indices().to_vec();
+            let lemmas = proof
+                .lemmas()
+                .iter()
+                .map(|hash| hash.unpack())
+                .collect::<Vec<H256>>();
+            Ok(TxOutProof { indices, lemmas })
+        } else {
+            Err(RPCError::custom(
+                RPCError::Invalid,
+                format!("Invalid tx hash: {}", hashes[0]),
+            ))
+        }
     }
 }

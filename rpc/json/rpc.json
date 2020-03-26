@@ -718,6 +718,29 @@
         ]
     },
     {
+        "description": "Returns the merkle proof of transactions.",
+        "method": "get_tx_out_proof",
+        "module": "chain",
+        "params": [
+            [
+                "0x365698b50ca0da75dca2c87f9e7b563811d3b5813736b8cc62cc3b106faceb17"
+            ]
+        ],
+        "result": {
+            "indices": [
+                0
+            ],
+            "lemmas": [
+                "0x365698b50ca0da75dca2c87f9e7b563811d3b5813736b8cc62cc3b106faceb17"
+            ]
+        },
+        "types": [
+            {
+                "hashes": "Hashes of transactions in the same block"
+            }
+        ]
+    },
+    {
         "description": "Returns each component of the created CKB in this block's cellbase, which is issued to a block N - 1 - ProposalWindow.farthest, where this block's height is N.",
         "method": "get_cellbase_output_capacity_details",
         "module": "chain",

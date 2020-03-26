@@ -782,6 +782,12 @@ impl From<BlockEconomicState> for core::BlockEconomicState {
     }
 }
 
+#[derive(Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash, Debug)]
+pub struct TxOutProof {
+    pub indices: Vec<u32>,
+    pub lemmas: Vec<H256>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

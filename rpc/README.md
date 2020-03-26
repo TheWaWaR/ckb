@@ -23,6 +23,7 @@ Subscriptions require a full duplex connection. CKB offers such connections in t
     *   [`get_cells_by_lock_hash`](#get_cells_by_lock_hash)
     *   [`get_live_cell`](#get_live_cell)
     *   [`get_transaction`](#get_transaction)
+    *   [`get_tx_out_proof`](#get_tx_out_proof)
     *   [`get_cellbase_output_capacity_details`](#get_cellbase_output_capacity_details)
     *   [`get_block_economic_state`](#get_block_economic_state)
     *   [`get_block_by_number`](#get_block_by_number)
@@ -615,6 +616,47 @@ http://localhost:8114
             "block_hash": null,
             "status": "pending"
         }
+    }
+}
+```
+
+### `get_tx_out_proof`
+
+Returns the merkle proof of transactions.
+
+#### Parameters
+
+    hashes - Hashes of transactions in the same block
+
+#### Examples
+
+```bash
+echo '{
+    "id": 2,
+    "jsonrpc": "2.0",
+    "method": "get_tx_out_proof",
+    "params": [
+        [
+            "0x365698b50ca0da75dca2c87f9e7b563811d3b5813736b8cc62cc3b106faceb17"
+        ]
+    ]
+}' \
+| tr -d '\n' \
+| curl -H 'content-type: application/json' -d @- \
+http://localhost:8114
+```
+
+```json
+{
+    "id": 2,
+    "jsonrpc": "2.0",
+    "result": {
+        "indices": [
+            0
+        ],
+        "lemmas": [
+            "0x365698b50ca0da75dca2c87f9e7b563811d3b5813736b8cc62cc3b106faceb17"
+        ]
     }
 }
 ```
